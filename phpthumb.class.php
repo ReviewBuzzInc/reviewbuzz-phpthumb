@@ -243,7 +243,6 @@ class phpthumb {
 		}
 
 		$this->iswindows  = (bool) (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN');
-		$this->issafemode = (bool) preg_match('#(1|ON)#i', ini_get('safe_mode'));
 		$this->config_document_root = (!empty($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT']   : $this->config_document_root);
 		$this->config_cache_prefix  = ( isset($_SERVER['SERVER_NAME'])   ? $_SERVER['SERVER_NAME'].'_' : '');
 
@@ -3767,32 +3766,24 @@ if (false) {
 				$this->DebugMessage('Not using EXIF thumbnail data because $this->exif_thumbnail_data is empty', __FILE__, __LINE__);
 				break;
 			}
-			if (ini_get('safe_mode')) {
-				if (!$this->SourceImageIsTooLarge($this->source_width, $this->source_height)) {
-					$this->DebugMessage('Using EXIF thumbnail data because source image too large and safe_mode enabled', __FILE__, __LINE__);
-					$this->aoe = true;
-				} else {
-					break;
-				}
-			} else {
-				if (!$this->config_use_exif_thumbnail_for_speed) {
-					$this->DebugMessage('Not using EXIF thumbnail data because $this->config_use_exif_thumbnail_for_speed is FALSE', __FILE__, __LINE__);
-					break;
-				}
-				if (($this->thumbnailCropX != 0) || ($this->thumbnailCropY != 0)) {
-					$this->DebugMessage('Not using EXIF thumbnail data because source cropping is enabled ('.$this->thumbnailCropX.','.$this->thumbnailCropY.')', __FILE__, __LINE__);
-					break;
-				}
-				if (($this->w > $this->exif_thumbnail_width) || ($this->h > $this->exif_thumbnail_height)) {
-					$this->DebugMessage('Not using EXIF thumbnail data because EXIF thumbnail is too small ('.$this->exif_thumbnail_width.'x'.$this->exif_thumbnail_height.' vs '.$this->w.'x'.$this->h.')', __FILE__, __LINE__);
-					break;
-				}
-				$source_ar = $this->source_width / $this->source_height;
-				$exif_ar   = $this->exif_thumbnail_width / $this->exif_thumbnail_height;
-				if (number_format($source_ar, 2) != number_format($exif_ar, 2)) {
-					$this->DebugMessage('not using EXIF thumbnail because $source_ar != $exif_ar ('.$source_ar.' != '.$exif_ar.')', __FILE__, __LINE__);
-					break;
-				}
+				
+			if (!$this->config_use_exif_thumbnail_for_speed) {
+				$this->DebugMessage('Not using EXIF thumbnail data because $this->config_use_exif_thumbnail_for_speed is FALSE', __FILE__, __LINE__);
+				break;
+			}
+			if (($this->thumbnailCropX != 0) || ($this->thumbnailCropY != 0)) {
+				$this->DebugMessage('Not using EXIF thumbnail data because source cropping is enabled ('.$this->thumbnailCropX.','.$this->thumbnailCropY.')', __FILE__, __LINE__);
+				break;
+			}
+			if (($this->w > $this->exif_thumbnail_width) || ($this->h > $this->exif_thumbnail_height)) {
+				$this->DebugMessage('Not using EXIF thumbnail data because EXIF thumbnail is too small ('.$this->exif_thumbnail_width.'x'.$this->exif_thumbnail_height.' vs '.$this->w.'x'.$this->h.')', __FILE__, __LINE__);
+				break;
+			}
+			$source_ar = $this->source_width / $this->source_height;
+			$exif_ar   = $this->exif_thumbnail_width / $this->exif_thumbnail_height;
+			if (number_format($source_ar, 2) != number_format($exif_ar, 2)) {
+				$this->DebugMessage('not using EXIF thumbnail because $source_ar != $exif_ar ('.$source_ar.' != '.$exif_ar.')', __FILE__, __LINE__);
+				break;
 			}
 
 			// EXIF thumbnail exists, and is equal to or larger than destination thumbnail, and will be use as source image
@@ -3862,7 +3853,7 @@ if (false) {
 					$this->ErrorImage(implode("\n", $errormessages));
 
 				} else {
-					$this->DebugMessage('All attempts to create GD image source failed ('.(ini_get('safe_mode') ? 'Safe Mode enabled, ImageMagick unavailable and source image probably too large for GD': ($GDreadSupport ? 'source image probably corrupt' : 'GD does not have read support for "'.$imageHeader.'"')).'), cannot generate thumbnail');
+					$this->DebugMessage('All attempts to create GD image source failed ('.($GDreadSupport ? 'source image probably corrupt' : 'GD does not have read support for "'.$imageHeader.'"').'), cannot generate thumbnail');
 					//$this->DebugMessage('All attempts to create GD image source failed ('.($GDreadSupport ? 'source image probably corrupt' : 'GD does not have read support for "'.$imageHeader.'"').'), outputing raw image', __FILE__, __LINE__);
 					//if (!$this->phpThumbDebug) {
 					//	header($imageHeader);
@@ -4019,7 +4010,6 @@ if (false) {
 		$DebugOutput[] = 'ini_get(allow_url_fopen)       = '.$this->phpThumbDebugVarDump(@ini_get('allow_url_fopen'));
 		$DebugOutput[] = 'ini_get(disable_functions)     = '.$this->phpThumbDebugVarDump(@ini_get('disable_functions'));
 		$DebugOutput[] = 'get_cfg_var(disable_functions) = '.$this->phpThumbDebugVarDump(@get_cfg_var('disable_functions'));
-		$DebugOutput[] = 'ini_get(safe_mode)             = '.$this->phpThumbDebugVarDump(@ini_get('safe_mode'));
 		$DebugOutput[] = 'ini_get(open_basedir)          = '.$this->phpThumbDebugVarDump(@ini_get('open_basedir'));
 		$DebugOutput[] = 'ini_get(max_execution_time)    = '.$this->phpThumbDebugVarDump(@ini_get('max_execution_time'));
 		$DebugOutput[] = 'ini_get(memory_limit)          = '.$this->phpThumbDebugVarDump(@ini_get('memory_limit'));

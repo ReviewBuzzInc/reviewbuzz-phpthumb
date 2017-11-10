@@ -12,21 +12,11 @@
 
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
-ini_set('magic_quotes_runtime', '0');
-if (ini_get('magic_quotes_runtime')) {
-	die('"magic_quotes_runtime" is set in php.ini, cannot run phpThumb with this enabled');
-}
 // Set a default timezone if web server has not done already in php.ini
 if (!ini_get('date.timezone') && function_exists('date_default_timezone_set')) { // PHP >= 5.1.0
     date_default_timezone_set('UTC');
 }
 $starttime = array_sum(explode(' ', microtime())); // could be called as microtime(true) for PHP 5.0.0+
-
-// this script relies on the superglobal arrays, fake it here for old PHP versions
-if (PHP_VERSION < '4.1.0') {
-	$_SERVER = $HTTP_SERVER_VARS;
-	$_GET    = $HTTP_GET_VARS;
-}
 
 function SendSaveAsFileHeaderIfNeeded() {
 	if (headers_sent()) {
@@ -329,28 +319,28 @@ if ($phpThumb->config_mysql_query) {
 		if ($found_missing_function) {
 			$phpThumb->ErrorImage('SQL function unavailable: '.$found_missing_function);
 		} else {
-			if ($cid = @mysql_connect($phpThumb->config_mysql_hostname, $phpThumb->config_mysql_username, $phpThumb->config_mysql_password)) {
-				if (@mysql_select_db($phpThumb->config_mysql_database, $cid)) {
-					if ($result = @mysql_query($phpThumb->config_mysql_query, $cid)) {
-						if ($row = @mysql_fetch_array($result)) {
+			if ($cid = @mysqli_connect($phpThumb->config_mysql_hostname, $phpThumb->config_mysql_username, $phpThumb->config_mysql_password)) {
+				if (@mysqli_select_db($cid, $phpThumb->config_mysql_database)) {
+					if ($result = @mysqli_query($cid, $phpThumb->config_mysql_query)) {
+						if ($row = @mysqli_fetch_array($result)) {
 
-							mysql_free_result($result);
-							mysql_close($cid);
+							mysqli_free_result($result);
+							mysqli_close($cid);
 							$phpThumb->setSourceData($row[0]);
 							unset($row);
 
 						} else {
-							mysql_free_result($result);
-							mysql_close($cid);
+							mysqli_free_result($result);
+							mysqli_close($cid);
 							$phpThumb->ErrorImage('no matching data in database.');
 						}
 					} else {
-						mysql_close($cid);
-						$phpThumb->ErrorImage('Error in MySQL query: "'.mysql_error($cid).'"');
+						mysqli_close($cid);
+						$phpThumb->ErrorImage('Error in MySQL query: "'.mysqli_error($cid).'"');
 					}
 				} else {
-					mysql_close($cid);
-					$phpThumb->ErrorImage('cannot select MySQL database: "'.mysql_error($cid).'"');
+					mysqli_close($cid);
+					$phpThumb->ErrorImage('cannot select MySQL database: "'.mysqli_error($cid).'"');
 				}
 			} else {
 				$phpThumb->ErrorImage('cannot connect to MySQL server');
